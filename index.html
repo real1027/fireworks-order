@@ -460,6 +460,16 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
 .s-available { background: #e8f5e9; color: #2e7d32; }
 .s-limited { background: #fff3e0; color: #e65100; }
 .s-unavailable { background: #fce4ec; color: #c62828; }
+.edit-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+.edit-btn:active { color: #302b63; }
 .delete-btn {
   background: none;
   border: none;
@@ -693,8 +703,7 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
   <div class="admin-toolbar">
     <button class="add-product-btn" onclick="openAddModal()">＋ 新增品項</button>
     <div class="admin-btn-row">
-      <button class="admin-btn-secondary" onclick="exportJson()">📥 匯出 JSON</button>
-      <button class="admin-btn-secondary" onclick="exportAdminPdf()">📄 品項PDF</button>
+      <button class="admin-btn-secondary" onclick="exportAdminPdf()">📄 品項總覽圖</button>
     </div>
     <div class="admin-btn-row">
       <button class="admin-btn-secondary" style="background:#e8f5e9;border-color:#2e7d32;color:#2e7d32" onclick="syncToSheets()">☁️ 同步到 Google Sheets</button>
@@ -730,6 +739,34 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
     <div class="modal-actions">
       <button class="modal-btn modal-cancel" onclick="closeAllModals()">取消</button>
       <button class="modal-btn modal-confirm" onclick="confirmAddProduct()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======== EDIT PRODUCT MODAL ======== -->
+<div class="modal-overlay hidden" id="edit-modal">
+  <div class="modal">
+    <h3 class="modal-title">修改品項</h3>
+    <input type="hidden" id="edit-id">
+    <div class="form-group">
+      <label class="form-label">分類</label>
+      <input type="text" class="form-input" id="edit-category" list="cat-datalist">
+    </div>
+    <div class="form-group">
+      <label class="form-label">品名</label>
+      <input type="text" class="form-input" id="edit-name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">庫存狀態</label>
+      <select class="form-select" id="edit-status">
+        <option value="現貨">現貨</option>
+        <option value="少量">少量</option>
+        <option value="缺">缺貨</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-cancel" onclick="closeAllModals()">取消</button>
+      <button class="modal-btn modal-confirm" onclick="confirmEditProduct()">儲存</button>
     </div>
   </div>
 </div>
@@ -1193,7 +1230,8 @@ function renderAdmin() {
             onchange="toggleEnabled('${p.id}',this.checked)">
           <span class="admin-product-name">${p.name}</span>
           <button class="status-btn ${sc}" onclick="cycleStatus('${p.id}')">${p.status}</button>
-          <button class="delete-btn" onclick="delProduct('${p.id}')">✕</button>
+          <button class="edit-btn" onclick="openEditModal('${p.id}')" title="編輯">✏️</button>
+          <button class="delete-btn" onclick="delProduct('${p.id}')" title="刪除">✕</button>
         </div>`;
     });
     html += '</div>';
@@ -1253,50 +1291,94 @@ async function syncToSheets() {
   }
 }
 
-function exportJson() {
-  const json = JSON.stringify(products, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'products.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
+async function exportAdminPdf() {
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = '⏳ 產生中…';
+  btn.disabled = true;
+  try {
+    const d = new Date();
+    const date = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+    const cats = {};
+    products.forEach(p => (cats[p.cat] = cats[p.cat] || []).push(p));
+
+    let rows = '';
+    for (const [cat, items] of Object.entries(cats)) {
+      rows += `<tr><td colspan="4" class="admin-print-cat">${CAT_EMOJI[cat] || ''} ${cat}</td></tr>`;
+      items.forEach((p, i) => {
+        const statusColor = p.status === '現貨' ? '#2e7d32' : p.status === '少量' ? '#e65100' : '#c62828';
+        rows += `<tr>
+          <td style="width:30px;text-align:center;color:#999">${i+1}</td>
+          <td>${p.name}</td>
+          <td style="text-align:center;color:${statusColor};font-weight:700">${p.status}</td>
+          <td style="text-align:center;color:${p.on ? '#2e7d32' : '#bbb'}">${p.on ? '✓ 顯示' : '✗ 隱藏'}</td>
+        </tr>`;
+      });
+    }
+
+    const area = document.getElementById('admin-print-area');
+    area.innerHTML = `
+      <div class="admin-print-title">品 項 總 覽</div>
+      <div class="admin-print-date">匯出日期：${date}　共 ${products.length} 項</div>
+      <table class="admin-print-table">
+        <thead><tr>
+          <th>#</th><th>品名</th><th style="width:56px">狀態</th><th style="width:64px">是否顯示</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+    area.style.cssText = 'display:block;position:fixed;top:-9999px;left:0;width:700px;background:white;padding:20px;font-size:13px;';
+    const canvas = await html2canvas(area, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+    area.style.cssText = 'display:none';
+
+    const dataUrl = canvas.toDataURL('image/png');
+    let overlay = document.getElementById('img-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'img-overlay';
+      overlay.innerHTML = `
+        <div id="img-overlay-box">
+          <p id="img-overlay-hint"></p>
+          <img id="img-overlay-img" src="" alt="品項總覽">
+          <button id="img-overlay-close" onclick="document.getElementById('img-overlay').style.display='none'">✕ 關閉</button>
+        </div>`;
+      document.body.appendChild(overlay);
+    }
+    document.getElementById('img-overlay-hint').innerHTML = '📱 長按圖片 → 加入照片&nbsp;&nbsp;💻 右鍵 → 另存圖片';
+    document.getElementById('img-overlay-img').src = dataUrl;
+    overlay.style.display = 'flex';
+  } catch(e) {
+    alert('圖片產生失敗，請截圖代替。');
+    console.error(e);
+  } finally {
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
 }
 
-function exportAdminPdf() {
-  const d = new Date();
-  const date = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
-  const cats = {};
-  products.forEach(p => (cats[p.cat] = cats[p.cat] || []).push(p));
+function openEditModal(id) {
+  const p = findProduct(id);
+  if (!p) return;
+  const cats = [...new Set(products.map(x => x.cat))];
+  document.getElementById('cat-datalist').innerHTML = cats.map(c => `<option value="${c}">`).join('');
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-category').value = p.cat;
+  document.getElementById('edit-name').value = p.name;
+  document.getElementById('edit-status').value = p.status;
+  document.getElementById('edit-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('edit-name').focus(), 100);
+}
 
-  let rows = '';
-  for (const [cat, items] of Object.entries(cats)) {
-    rows += `<tr><td colspan="4" class="admin-print-cat">${CAT_EMOJI[cat] || ''} ${cat}</td></tr>`;
-    items.forEach((p, i) => {
-      const statusColor = p.status === '現貨' ? '#2e7d32' : p.status === '少量' ? '#e65100' : '#c62828';
-      const onText = p.on ? '✓ 顯示' : '✗ 隱藏';
-      rows += `<tr>
-        <td style="width:30px;text-align:center;color:#999">${i+1}</td>
-        <td>${p.name}</td>
-        <td style="text-align:center;color:${statusColor};font-weight:700">${p.status}</td>
-        <td style="text-align:center;color:${p.on ? '#2e7d32' : '#bbb'}">${onText}</td>
-      </tr>`;
-    });
-  }
-
-  document.getElementById('admin-print-area').innerHTML = `
-    <div class="admin-print-title">品 項 總 覽</div>
-    <div class="admin-print-date">匯出日期：${date}　共 ${products.length} 項</div>
-    <table class="admin-print-table">
-      <thead><tr>
-        <th>#</th><th>品名</th><th style="width:56px">狀態</th><th style="width:64px">是否顯示</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-
-  document.body.classList.add('print-admin');
-  window.print();
-  document.body.classList.remove('print-admin');
+function confirmEditProduct() {
+  const id = document.getElementById('edit-id').value;
+  const cat = document.getElementById('edit-category').value.trim();
+  const name = document.getElementById('edit-name').value.trim();
+  const status = document.getElementById('edit-status').value;
+  if (!cat || !name) { alert('請填寫分類和品名'); return; }
+  const p = findProduct(id);
+  if (p) { p.cat = cat; p.name = name; p.status = status; save(); }
+  closeAllModals();
+  renderAdmin();
 }
 
 /* ====================================================
