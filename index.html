@@ -830,7 +830,7 @@ const DEFAULT_PRODUCTS = [
   {id:'p93', cat:'爆炸音類',        name:'80公分彩帶',             status:'現貨', on:true},
 ];
 
-let products = [];
+let products = DEFAULT_PRODUCTS; // 預設品項，Sheets 載完後會更新
 let cart = {}; // { id: qty }
 
 async function save() {
@@ -882,9 +882,9 @@ function showView(id) {
    HOME
 ==================================================== */
 async function startOrder() {
-  await initPromise;
+  // 最多等 4 秒讓 Sheets 載入，超時直接用現有品項
+  await Promise.race([initPromise, new Promise(r => setTimeout(r, 4000))]);
   cart = {};
-  document.getElementById('customer-name').value = '';
   renderProductList();
   updateCartBar();
   showView('customer');
