@@ -850,23 +850,27 @@ function getPin() { return remotePin || localStorage.getItem(KEY_PIN) || DEFAULT
 function findProduct(id) { return products.find(p => p.id === id); }
 
 /* 啟動順序：Google Sheets → localStorage → 預設 */
+// 先用快取或預設品項，讓 UI 立即可用
+products = JSON.parse(localStorage.getItem(KEY_PRODUCTS)) || DEFAULT_PRODUCTS;
+
+// 背景載入 Sheets，完成後更新品項（若購物車還空才刷新列表）
 const initPromise = (async function init() {
-  if (USE_SHEETS) {
-    try {
-      const res = await fetch(SHEETS_URL);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.adminPin) remotePin = String(data.adminPin);
-        if (data.products && data.products.length > 0) {
-          products = data.products;
-          localStorage.setItem(KEY_PRODUCTS, JSON.stringify(products));
-          return; // 有拿到資料才 return
-        }
+  if (!USE_SHEETS) return;
+  try {
+    const res = await fetch(SHEETS_URL);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.adminPin) remotePin = String(data.adminPin);
+    if (data.products && data.products.length > 0) {
+      products = data.products;
+      localStorage.setItem(KEY_PRODUCTS, JSON.stringify(products));
+      // 若顧客頁面開著且購物車是空的，靜默刷新品項列表
+      if (document.getElementById('customer')?.classList.contains('active') && Object.keys(cart).length === 0) {
+        renderProductList();
+        updateCartBar();
       }
-    } catch(e) { console.warn('Sheets load error', e); }
-  }
-  // fallback：localStorage 或預設品項
-  products = JSON.parse(localStorage.getItem(KEY_PRODUCTS)) || DEFAULT_PRODUCTS;
+    }
+  } catch(e) { console.warn('Sheets load error', e); }
 })();
 
 /* ====================================================
@@ -881,9 +885,7 @@ function showView(id) {
 /* ====================================================
    HOME
 ==================================================== */
-async function startOrder() {
-  // 最多等 4 秒讓 Sheets 載入，超時直接用現有品項
-  await Promise.race([initPromise, new Promise(r => setTimeout(r, 4000))]);
+function startOrder() {
   cart = {};
   renderProductList();
   updateCartBar();
