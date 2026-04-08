@@ -1264,32 +1264,29 @@ function delProduct(id) {
 /* ====================================================
    EXPORT / SYNC FUNCTIONS
 ==================================================== */
-async function syncToSheets() {
+function syncToSheets() {
   if (!USE_SHEETS) {
     alert('尚未設定 Google Sheets URL，請先填入 SHEETS_URL');
     return;
   }
   const btn = event.target;
-  btn.textContent = '⏳ 同步中...';
+
+  // 本機早已儲存，立即顯示成功，背景上傳 Sheets 不擋操作
+  btn.textContent = '✅ 已儲存！';
   btn.disabled = true;
-  try {
-    const res = await fetch(SHEETS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ key: WRITE_KEY, products })
-    });
-    const result = await res.json();
-    if (result.success) {
-      btn.textContent = '✅ 已儲存！';
-      setTimeout(() => { btn.textContent = '💾 儲存修改'; btn.disabled = false; }, 2000);
-    } else {
-      throw new Error(result.error || '未知錯誤');
-    }
-  } catch(e) {
-    alert('儲存失敗：' + e.message);
-    btn.textContent = '💾 儲存修改';
-    btn.disabled = false;
-  }
+  setTimeout(() => { btn.textContent = '💾 儲存修改'; btn.disabled = false; }, 1500);
+
+  // 背景同步到 Google Sheets（不等待）
+  fetch(SHEETS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ key: WRITE_KEY, products })
+  })
+  .then(r => r.json())
+  .then(result => {
+    if (!result.success) console.warn('Sheets 同步失敗：', result.error);
+  })
+  .catch(e => console.warn('Sheets 同步失敗：', e.message));
 }
 
 async function exportAdminPdf() {
