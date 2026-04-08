@@ -850,21 +850,22 @@ function getPin() { return remotePin || localStorage.getItem(KEY_PIN) || DEFAULT
 function findProduct(id) { return products.find(p => p.id === id); }
 
 /* 啟動順序：Google Sheets → localStorage → 預設 */
-(async function init() {
+const initPromise = (async function init() {
   if (USE_SHEETS) {
     try {
       const res = await fetch(SHEETS_URL);
       if (res.ok) {
         const data = await res.json();
+        if (data.adminPin) remotePin = String(data.adminPin);
         if (data.products && data.products.length > 0) {
           products = data.products;
           localStorage.setItem(KEY_PRODUCTS, JSON.stringify(products));
+          return; // 有拿到資料才 return
         }
-        if (data.adminPin) remotePin = String(data.adminPin);
-        return;
       }
     } catch(e) { console.warn('Sheets load error', e); }
   }
+  // fallback：localStorage 或預設品項
   products = JSON.parse(localStorage.getItem(KEY_PRODUCTS)) || DEFAULT_PRODUCTS;
 })();
 
@@ -880,7 +881,8 @@ function showView(id) {
 /* ====================================================
    HOME
 ==================================================== */
-function startOrder() {
+async function startOrder() {
+  await initPromise;
   cart = {};
   document.getElementById('customer-name').value = '';
   renderProductList();
