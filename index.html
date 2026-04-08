@@ -296,6 +296,7 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
   font-family: inherit;
 }
 .btn-back-edit { background: #f0f0f0; color: #555; }
+.btn-save-img { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; font-weight: 700; }
 .btn-print { background: linear-gradient(135deg, #302b63, #0f0c29); color: white; }
 
 /* ===== ADMIN LOGIN ===== */
@@ -553,6 +554,7 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
   }
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -595,11 +597,12 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
     <div id="print-area">
       <div class="order-form" id="order-form-content"></div>
     </div>
-    <p class="order-hint">截圖或點「列印/存PDF」後傳給廠商完成下訂</p>
+    <p class="order-hint">點「📷 儲存圖片」→ 手機長按圖片存到相簿，再傳給廠商</p>
   </div>
   <div class="action-bar">
     <button class="action-btn btn-back-edit" onclick="showView('customer')">← 修改</button>
-    <button class="action-btn btn-print" onclick="printOrder()">📄 列印 / 存PDF</button>
+    <button class="action-btn btn-save-img" onclick="saveOrderImage()">📷 儲存圖片</button>
+    <button class="action-btn btn-print" onclick="printOrder()">🖨 列印</button>
   </div>
 </div>
 
@@ -1048,6 +1051,54 @@ function renderOrderForm(name) {
 }
 
 function printOrder() { window.print(); }
+
+async function saveOrderImage() {
+  const btn = document.querySelector('.btn-save-img');
+  const orig = btn.textContent;
+  btn.textContent = '⏳ 產生中…';
+  btn.disabled = true;
+  try {
+    const target = document.getElementById('order-form-content');
+    const canvas = await html2canvas(target, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      scrollX: 0,
+      scrollY: -window.scrollY,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight
+    });
+    const dataUrl = canvas.toDataURL('image/png');
+    // 開新分頁顯示圖片：iOS 可長按「加入照片」，桌機可右鍵另存
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(`<!DOCTYPE html><html><head>
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>訂購單</title>
+        <style>
+          body{margin:0;background:#888;display:flex;flex-direction:column;align-items:center;padding:16px;box-sizing:border-box;}
+          img{max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.4);}
+          p{color:#fff;font-size:14px;margin:12px 0 0;font-family:sans-serif;text-align:center;}
+        </style></head><body>
+        <img src="${dataUrl}">
+        <p>📱 iPhone：長按圖片 → 加入照片<br>💻 電腦：右鍵 → 另存圖片</p>
+        </body></html>`);
+      win.document.close();
+    } else {
+      // 若被封鎖，改用 a 標籤下載（桌機 fallback）
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = '訂購單.png';
+      a.click();
+    }
+  } catch(e) {
+    alert('圖片產生失敗，請截圖代替。');
+    console.error(e);
+  } finally {
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+}
 
 /* ====================================================
    ADMIN LOGIN
