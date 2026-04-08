@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>煙火訂購系統</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background: #f0f2f5; color: #1a1a1a; }
+
+/* ===== VIEWS ===== */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ===== HOME ===== */
+.home-inner {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #0f0c29, #302b63, #24243e);
+  color: white;
+  padding: 40px 20px;
+  text-align: center;
+}
+.home-logo { font-size: 56px; margin-bottom: 12px; }
+.home-title { font-size: 26px; font-weight: 700; letter-spacing: 4px; margin-bottom: 6px; }
+.home-subtitle { font-size: 13px; opacity: 0.5; margin-bottom: 56px; letter-spacing: 2px; }
+.home-btn {
+  width: 100%;
+  max-width: 300px;
+  padding: 18px 24px;
+  border: none;
+  border-radius: 16px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 14px;
+  letter-spacing: 2px;
+  font-family: inherit;
+  transition: transform 0.1s, opacity 0.1s;
+}
+.home-btn:active { transform: scale(0.97); }
+.btn-order {
+  background: linear-gradient(135deg, #f7971e, #ffd200);
+  color: #1a1a1a;
+  box-shadow: 0 6px 24px rgba(247,151,30,0.4);
+}
+.btn-admin {
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: white;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e8e8e8;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #555;
+  width: 32px;
+  display: flex;
+  align-items: center;
+}
+.page-title { font-size: 17px; font-weight: 700; flex: 1; }
+.header-action {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 8px;
+}
+
+/* ===== CUSTOMER: NAME SECTION ===== */
+.name-section { background: white; padding: 16px 20px; margin-bottom: 10px; }
+.field-label {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.name-input {
+  width: 100%;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.name-input:focus { border-color: #302b63; }
+
+/* ===== CUSTOMER: PRODUCT LIST ===== */
+.category-section { background: white; margin-bottom: 10px; }
+.category-header {
+  padding: 12px 20px;
+  background: #fafafa;
+  font-weight: 700;
+  font-size: 13px;
+  color: #555;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.product-item {
+  display: flex;
+  align-items: center;
+  padding: 13px 20px;
+  border-bottom: 1px solid #f5f5f5;
+  gap: 12px;
+}
+.product-item:last-of-type { border-bottom: none; }
+.product-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: #302b63;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.product-name { flex: 1; font-size: 14px; line-height: 1.4; cursor: pointer; }
+.product-badge {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.badge-available { background: #e8f5e9; color: #2e7d32; }
+.badge-limited { background: #fff3e0; color: #e65100; }
+.badge-unavailable { background: #f5f5f5; color: #bbb; }
+
+/* Quantity row (shown when checked) */
+.qty-row {
+  display: none;
+  align-items: center;
+  padding: 0 20px 12px 52px;
+  gap: 10px;
+}
+.qty-row.visible { display: flex; }
+.qty-btn {
+  width: 34px;
+  height: 34px;
+  border: 2px solid #302b63;
+  border-radius: 8px;
+  background: none;
+  font-size: 20px;
+  font-weight: 700;
+  color: #302b63;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+.qty-btn:active { background: #f0eeff; }
+.qty-input {
+  width: 56px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 6px 4px;
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+}
+.qty-input:focus { border-color: #302b63; }
+.qty-label { font-size: 13px; color: #888; }
+
+/* ===== CART BAR ===== */
+.cart-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #1a1040;
+  color: white;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 200;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease;
+}
+.cart-bar.hidden { transform: translateY(100%); }
+.cart-info { font-size: 12px; opacity: 0.6; }
+.cart-count { font-size: 20px; font-weight: 700; }
+.preview-btn {
+  background: linear-gradient(135deg, #f7971e, #ffd200);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.has-cart-bar { padding-bottom: 85px; }
+
+/* ===== ORDER PREVIEW ===== */
+.order-preview-content { padding: 16px; padding-bottom: 100px; }
+.order-form {
+  background: white;
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+.order-title {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #222;
+}
+.order-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+.order-meta-item { display: flex; gap: 6px; align-items: baseline; font-size: 14px; }
+.order-meta-label { font-size: 12px; color: #999; }
+.order-meta-value { font-weight: 700; }
+.order-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.order-table th {
+  background: #f5f5f5;
+  padding: 8px 4px;
+  text-align: center;
+  border: 1px solid #bbb;
+  font-size: 12px;
+  font-weight: 700;
+}
+.order-table td {
+  padding: 7px 4px;
+  border: 1px solid #ddd;
+  text-align: center;
+  height: 30px;
+}
+.order-table td.name-cell { text-align: left; padding-left: 8px; }
+.order-table tr.filled td { background: #fffef0; }
+.order-hint {
+  text-align: center;
+  color: #bbb;
+  font-size: 12px;
+  margin-top: 14px;
+}
+
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 14px 20px;
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid #eee;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+}
+.action-btn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-back-edit { background: #f0f0f0; color: #555; }
+.btn-print { background: linear-gradient(135deg, #302b63, #0f0c29); color: white; }
+
+/* ===== ADMIN LOGIN ===== */
+.admin-login-inner {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #0f0c29, #302b63, #24243e);
+  color: white;
+  padding: 40px 20px;
+  text-align: center;
+  position: relative;
+}
+.login-back {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  font-size: 20px;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-icon { font-size: 48px; margin-bottom: 16px; }
+.login-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.login-subtitle { font-size: 13px; opacity: 0.5; margin-bottom: 40px; }
+.pin-dots { display: flex; gap: 18px; margin-bottom: 36px; }
+.pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transition: all 0.15s;
+}
+.pin-dot.filled { background: white; transform: scale(1.15); }
+.pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 256px;
+  width: 100%;
+}
+.pin-key {
+  aspect-ratio: 1;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  color: white;
+  font-size: 22px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pin-key:active { background: rgba(255,255,255,0.25); transform: scale(0.93); }
+.pin-key-sm { font-size: 14px; opacity: 0.8; }
+.pin-error { color: #ff6b6b; font-size: 13px; margin-top: 20px; min-height: 20px; }
+
+/* ===== ADMIN DASHBOARD ===== */
+.admin-toolbar {
+  background: white;
+  padding: 14px 20px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+.add-product-btn {
+  width: 100%;
+  background: #302b63;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.admin-product-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  gap: 10px;
+  border-bottom: 1px solid #f5f5f5;
+}
+.admin-toggle {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #302b63;
+  flex-shrink: 0;
+}
+.admin-product-name { flex: 1; font-size: 13px; line-height: 1.4; }
+.status-btn {
+  border: none;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.s-available { background: #e8f5e9; color: #2e7d32; }
+.s-limited { background: #fff3e0; color: #e65100; }
+.s-unavailable { background: #fce4ec; color: #c62828; }
+.delete-btn {
+  background: none;
+  border: none;
+  color: #ddd;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+.delete-btn:active { color: #f44336; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 500;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.hidden { display: none; }
+.modal {
+  background: white;
+  border-radius: 24px 24px 0 0;
+  padding: 24px 24px 44px;
+  width: 100%;
+  max-width: 480px;
+}
+.modal-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.form-input, .form-select {
+  width: 100%;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+  background: white;
+  transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus { border-color: #302b63; }
+.modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+.modal-btn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.modal-cancel { background: #f0f0f0; color: #666; }
+.modal-confirm { background: #302b63; color: white; }
+
+/* ===== ADMIN TOOLBAR BUTTONS ===== */
+.admin-toolbar { display: flex; flex-direction: column; gap: 10px; }
+.admin-btn-row { display: flex; gap: 10px; }
+.admin-btn-secondary {
+  flex: 1;
+  background: white;
+  color: #302b63;
+  border: 2px solid #302b63;
+  border-radius: 10px;
+  padding: 11px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+}
+.admin-btn-secondary:active { background: #f0eeff; }
+
+/* ===== ADMIN PRINT VIEW ===== */
+#admin-print-area { display: none; }
+.admin-print-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.admin-print-date { text-align: center; font-size: 12px; color: #888; margin-bottom: 16px; }
+.admin-print-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.admin-print-table th {
+  background: #f0f0f0;
+  border: 1px solid #999;
+  padding: 6px 8px;
+  text-align: left;
+}
+.admin-print-table td {
+  border: 1px solid #ccc;
+  padding: 5px 8px;
+}
+.admin-print-cat {
+  background: #302b63;
+  color: white;
+  font-weight: 700;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+/* ===== PRINT ===== */
+@media print {
+  body * { visibility: hidden !important; }
+
+  /* Order print mode (default) */
+  body:not(.print-admin) #print-area,
+  body:not(.print-admin) #print-area * { visibility: visible !important; }
+  body:not(.print-admin) #print-area {
+    position: fixed !important;
+    top: 0; left: 0; right: 0; bottom: 0;
+    padding: 10mm 12mm;
+    background: white;
+  }
+  body:not(.print-admin) .order-form { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; }
+  body:not(.print-admin) .order-hint { display: none !important; }
+
+  /* Admin product list print mode */
+  body.print-admin #admin-print-area,
+  body.print-admin #admin-print-area * { visibility: visible !important; }
+  body.print-admin #admin-print-area {
+    display: block !important;
+    position: fixed !important;
+    top: 0; left: 0; right: 0; bottom: 0;
+    padding: 10mm 12mm;
+    background: white;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ======== HOME ======== -->
+<div id="home" class="view active">
+  <div class="home-inner">
+    <div class="home-logo">🎆</div>
+    <h1 class="home-title">煙火訂購系統</h1>
+    <p class="home-subtitle">快速下訂 · 輕鬆管理</p>
+    <button class="home-btn btn-order" onclick="startOrder()">🛒 &nbsp;我要下訂</button>
+    <button class="home-btn btn-admin" onclick="goAdminLogin()">⚙️ &nbsp;管理介面</button>
+  </div>
+</div>
+
+<!-- ======== CUSTOMER VIEW ======== -->
+<div id="customer" class="view">
+  <div class="page-header">
+    <button class="back-btn" onclick="showView('home')">←</button>
+    <span class="page-title">選擇品項</span>
+  </div>
+  <div id="customer-content" class="has-cart-bar">
+    <div id="product-list"></div>
+  </div>
+  <div class="cart-bar hidden" id="cart-bar">
+    <div>
+      <div class="cart-info">已選品項</div>
+      <div class="cart-count"><span id="cart-item-count">0</span> 項</div>
+    </div>
+    <button class="preview-btn" onclick="previewOrder()">確認訂單 →</button>
+  </div>
+</div>
+
+<!-- ======== ORDER PREVIEW ======== -->
+<div id="order-preview" class="view">
+  <div class="page-header">
+    <button class="back-btn" onclick="showView('customer')">←</button>
+    <span class="page-title">確認訂單</span>
+  </div>
+  <div class="order-preview-content">
+    <div id="print-area">
+      <div class="order-form" id="order-form-content"></div>
+    </div>
+    <p class="order-hint">截圖或點「列印/存PDF」後傳給廠商完成下訂</p>
+  </div>
+  <div class="action-bar">
+    <button class="action-btn btn-back-edit" onclick="showView('customer')">← 修改</button>
+    <button class="action-btn btn-print" onclick="printOrder()">📄 列印 / 存PDF</button>
+  </div>
+</div>
+
+<!-- ======== ADMIN LOGIN ======== -->
+<div id="admin-login" class="view">
+  <div class="admin-login-inner">
+    <button class="login-back" onclick="showView('home')">←</button>
+    <div class="login-icon">🔐</div>
+    <h2 class="login-title">管理員登入</h2>
+    <p class="login-subtitle">請輸入 4 位數密碼</p>
+    <div class="pin-dots">
+      <div class="pin-dot" id="dot-0"></div>
+      <div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div>
+      <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key pin-key-sm" onclick="pinClear()">清除</button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key" onclick="pinDelete()">⌫</button>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+</div>
+
+<!-- ======== ADMIN DASHBOARD ======== -->
+<div id="admin-dashboard" class="view">
+  <div class="page-header">
+    <button class="back-btn" onclick="showView('home')">←</button>
+    <span class="page-title">品項管理</span>
+    <button class="header-action" onclick="showChangePin()">改密碼</button>
+  </div>
+  <div class="admin-toolbar">
+    <button class="add-product-btn" onclick="openAddModal()">＋ 新增品項</button>
+    <div class="admin-btn-row">
+      <button class="admin-btn-secondary" onclick="exportJson()">📥 匯出 JSON</button>
+      <button class="admin-btn-secondary" onclick="exportAdminPdf()">📄 品項PDF</button>
+    </div>
+    <div class="admin-btn-row">
+      <button class="admin-btn-secondary" style="background:#e8f5e9;border-color:#2e7d32;color:#2e7d32" onclick="syncToSheets()">☁️ 同步到 Google Sheets</button>
+    </div>
+  </div>
+  <div id="admin-product-list"></div>
+</div>
+
+<!-- ======== ADMIN PRINT AREA (hidden, only for print) ======== -->
+<div id="admin-print-area"></div>
+
+<!-- ======== ADD PRODUCT MODAL ======== -->
+<div class="modal-overlay hidden" id="add-modal">
+  <div class="modal">
+    <h3 class="modal-title">新增品項</h3>
+    <div class="form-group">
+      <label class="form-label">分類</label>
+      <input type="text" class="form-input" id="new-category" placeholder="例：蜂炮類" list="cat-datalist">
+      <datalist id="cat-datalist"></datalist>
+    </div>
+    <div class="form-group">
+      <label class="form-label">品名</label>
+      <input type="text" class="form-input" id="new-name" placeholder="例：100發蜂仔">
+    </div>
+    <div class="form-group">
+      <label class="form-label">庫存狀態</label>
+      <select class="form-select" id="new-status">
+        <option value="現貨">現貨</option>
+        <option value="少量">少量</option>
+        <option value="缺">缺貨</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-cancel" onclick="closeAllModals()">取消</button>
+      <button class="modal-btn modal-confirm" onclick="confirmAddProduct()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======== NAME INPUT MODAL ======== -->
+<div class="modal-overlay hidden" id="name-modal">
+  <div class="modal">
+    <h3 class="modal-title">最後一步！</h3>
+    <p style="font-size:13px;color:#999;margin-top:-12px;margin-bottom:20px">請輸入您的姓名，方便廠商確認訂單</p>
+    <div class="form-group">
+      <label class="form-label">訂購人姓名</label>
+      <input type="text" class="form-input" id="customer-name" placeholder="請輸入姓名"
+        onkeydown="if(event.key==='Enter') confirmName()">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-cancel" onclick="closeAllModals()">取消</button>
+      <button class="modal-btn modal-confirm" onclick="confirmName()">產生訂單 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======== CHANGE PIN MODAL ======== -->
+<div class="modal-overlay hidden" id="pin-modal">
+  <div class="modal">
+    <h3 class="modal-title">修改密碼</h3>
+    <div class="form-group">
+      <label class="form-label">新密碼（4 位數字）</label>
+      <input type="tel" class="form-input" id="new-pin-val" placeholder="輸入新的4位數密碼" maxlength="4" pattern="[0-9]{4}">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-cancel" onclick="closeAllModals()">取消</button>
+      <button class="modal-btn modal-confirm" onclick="confirmChangePin()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====================================================
+   DATA
+==================================================== */
+/* ====================================================
+   ★ Google Sheets 設定區 ★
+   完成 Code.gs 部署後，把 Apps Script 網頁應用程式 URL
+   貼到 SHEETS_URL，並確保 WRITE_KEY 與 Code.gs 一致
+==================================================== */
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz2cWMXX5jnOrwxNmBLOtOlInUp9vEAWHFaxIcsFgYrlYVMM5dMqpCuv_IYGKmCDxPOfQ/exec'; // ← 貼上你的 Apps Script URL
+const WRITE_KEY  = 'fw2025secret';     // ← 要跟 Code.gs 裡的 WRITE_KEY 一樣
+const USE_SHEETS = SHEETS_URL !== 'YOUR_WEB_APP_URL';
+
+const KEY_PIN = 'fw_pin';
+const KEY_PRODUCTS = 'fw_products';
+const DEFAULT_PIN = '1234';
+
+const DEFAULT_PRODUCTS = [
+  {id:'p1',  cat:'蜂炮類',         name:'小蜂仔25發Ⅱ',         status:'現貨', on:true},
+  {id:'p2',  cat:'蜂炮類',         name:'100發蜂仔',            status:'現貨', on:true},
+  {id:'p3',  cat:'日間煙火類',      name:'6發紅玉(2.0)',          status:'現貨', on:true},
+  {id:'p4',  cat:'日間煙火類',      name:'6發彩虹煙',             status:'現貨', on:true},
+  {id:'p5',  cat:'日間煙火類',      name:'9發彩虹牆',             status:'現貨', on:true},
+  {id:'p6',  cat:'日間煙火類',      name:'20發扇形彩煙雷',         status:'現貨', on:true},
+  {id:'p7',  cat:'日間煙火類',      name:'12發彩雲盛開（新品）',    status:'現貨', on:true},
+  {id:'p8',  cat:'大型煙火(扇形)',   name:'28發許願之星',           status:'缺',   on:true},
+  {id:'p9',  cat:'大型煙火(扇形)',   name:'18發龍王戰（扇型新品）',  status:'現貨', on:true},
+  {id:'p10', cat:'大型煙火(扇形)',   name:'25發星星魔術師',         status:'缺',   on:true},
+  {id:'p11', cat:'大型煙火(扇形)',   name:'16發龍之吼',            status:'現貨', on:true},
+  {id:'p12', cat:'大型煙火(扇形)',   name:'15發輕舞（新效果）',      status:'現貨', on:true},
+  {id:'p13', cat:'大型煙火(扇形)',   name:'30發炫舞（扇型）',        status:'缺',   on:true},
+  {id:'p14', cat:'大型煙火(扇形)',   name:'35發焰舞星空（新品）',    status:'現貨', on:true},
+  {id:'p15', cat:'大型煙火(扇形)',   name:'24發游星',              status:'現貨', on:true},
+  {id:'p16', cat:'大型煙火(直上)',   name:'10發銀河',              status:'缺',   on:true},
+  {id:'p17', cat:'大型煙火(直上)',   name:'亂玉II（新效果）',        status:'現貨', on:true},
+  {id:'p18', cat:'大型煙火(直上)',   name:'12發狼吼',              status:'現貨', on:true},
+  {id:'p19', cat:'大型煙火(直上)',   name:'16發夢境之旅',           status:'缺',   on:true},
+  {id:'p20', cat:'大型煙火(直上)',   name:'60發夜光彩虹牆',         status:'現貨', on:true},
+  {id:'p21', cat:'中型煙火類',      name:'20發一見鍾情(扇型)',      status:'缺',   on:true},
+  {id:'p22', cat:'中型煙火類',      name:'24發甜蜜蜜（直上）',      status:'現貨', on:true},
+  {id:'p23', cat:'中型煙火類',      name:'25發樂派對(扇型)',        status:'缺',   on:true},
+  {id:'p24', cat:'中型煙火類',      name:'25發七彩鑽石（直上）',    status:'缺',   on:true},
+  {id:'p25', cat:'中型煙火類',      name:'奇幻閃光20發（扇型）',    status:'現貨', on:true},
+  {id:'p26', cat:'中型煙火類',      name:'閃色之星24發（扇型）',    status:'現貨', on:true},
+  {id:'p27', cat:'中型煙火類',      name:'閃光寶藏30發（扇型）',    status:'現貨', on:true},
+  {id:'p28', cat:'中型煙火類',      name:'花火慶典18發（直上新品）', status:'現貨', on:true},
+  {id:'p29', cat:'中型煙火類',      name:'紅焰龍吟49發（直上新品）',status:'現貨', on:true},
+  {id:'p30', cat:'小型煙火類',      name:'9發開心',               status:'現貨', on:true},
+  {id:'p31', cat:'小型煙火類',      name:'9發光輝',               status:'現貨', on:true},
+  {id:'p32', cat:'小型煙火類',      name:'12發耀眼',              status:'缺',   on:true},
+  {id:'p33', cat:'小型煙火類',      name:'12發喜悅',              status:'現貨', on:true},
+  {id:'p34', cat:'小型煙火類',      name:'20發夢幻花園',           status:'缺',   on:true},
+  {id:'p35', cat:'小型煙火類',      name:'20發空花',              status:'缺',   on:true},
+  {id:'p36', cat:'小型煙火類',      name:'飛馳流星100發（新品）',   status:'現貨', on:true},
+  {id:'p37', cat:'玩具升空類',      name:'New龍響吐珠',            status:'缺',   on:true},
+  {id:'p38', cat:'玩具升空類',      name:'夢幻大吐珠（炸花）',      status:'缺',   on:true},
+  {id:'p39', cat:'玩具升空類',      name:'特效小高空',             status:'現貨', on:true},
+  {id:'p40', cat:'玩具升空類',      name:'發財小高空（新品）',      status:'現貨', on:true},
+  {id:'p41', cat:'玩具旋轉類',      name:'小旋風',                status:'現貨', on:true},
+  {id:'p42', cat:'玩具旋轉類',      name:'愛的魔力轉圈圈',         status:'現貨', on:true},
+  {id:'p43', cat:'小型玩具類',      name:'夢幻水鴛鴦',             status:'缺',   on:true},
+  {id:'p44', cat:'小型玩具類',      name:'魔球',                  status:'缺',   on:true},
+  {id:'p45', cat:'小型玩具類',      name:'燦爛霹靂珠',             status:'缺',   on:true},
+  {id:'p46', cat:'小型玩具類',      name:'黑蛇',                  status:'現貨', on:true},
+  {id:'p47', cat:'小型玩具類',      name:'龍響五彩煙霧球',         status:'缺',   on:true},
+  {id:'p48', cat:'小型玩具類',      name:'夢幻大甩炮',             status:'缺',   on:true},
+  {id:'p49', cat:'小型玩具類',      name:'夢幻甩炮',              status:'缺',   on:true},
+  {id:'p50', cat:'玩具飛行類',      name:'龍響小沖天',             status:'現貨', on:true},
+  {id:'p51', cat:'玩具飛行類',      name:'巨龍神鷹笛聲火箭',       status:'現貨', on:true},
+  {id:'p52', cat:'玩具飛行類',      name:'彩蝶游春(大蝶)',         status:'現貨', on:true},
+  {id:'p53', cat:'玩具飛行類',      name:'彩蝶游春(中蝶)',         status:'缺',   on:true},
+  {id:'p54', cat:'玩具飛行類',      name:'暴風大火箭',             status:'少量', on:true},
+  {id:'p55', cat:'玩具飛行類',      name:'超音火箭',              status:'現貨', on:true},
+  {id:'p56', cat:'玩具火花類',      name:'四季小花筒',             status:'缺',   on:true},
+  {id:'p57', cat:'玩具火花類',      name:'金樹銀花Ⅱ',             status:'缺',   on:true},
+  {id:'p58', cat:'玩具火花類',      name:'浪花噴泉',              status:'缺',   on:true},
+  {id:'p59', cat:'玩具火花類',      name:'New浪漫小熊',            status:'缺',   on:true},
+  {id:'p60', cat:'玩具火花類',      name:'太晶慶典（新品）',        status:'現貨', on:true},
+  {id:'p61', cat:'玩具火花類',      name:'春樂舞（新品）',          status:'現貨', on:true},
+  {id:'p62', cat:'玩具火花類',      name:'龍響之花V',              status:'現貨', on:true},
+  {id:'p63', cat:'玩具手持類',      name:'喵喵棒',                status:'現貨', on:true},
+  {id:'p64', cat:'玩具手持類',      name:'絢麗花火',              status:'缺',   on:true},
+  {id:'p65', cat:'玩具手持類',      name:'搖鈴閃閃（新品）',        status:'現貨', on:true},
+  {id:'p66', cat:'玩具手持類',      name:'幸運草',                status:'現貨', on:true},
+  {id:'p67', cat:'玩具手持類',      name:'暖暖花（新品）',          status:'現貨', on:true},
+  {id:'p68', cat:'玩具手持類',      name:'愛心棒',                status:'缺',   on:true},
+  {id:'p69', cat:'玩具手持類',      name:'小仙子',                status:'現貨', on:true},
+  {id:'p70', cat:'玩具手持類',      name:'大仙女棒',              status:'現貨', on:true},
+  {id:'p71', cat:'玩具手持類',      name:'New彩色夢幻仙子',        status:'缺',   on:true},
+  {id:'p72', cat:'玩具手持類',      name:'粉紅繽紛棒',             status:'少量', on:true},
+  {id:'p73', cat:'爆炸音類',        name:'20萬',                  status:'缺',   on:true},
+  {id:'p74', cat:'爆炸音類',        name:'30萬',                  status:'缺',   on:true},
+  {id:'p75', cat:'爆炸音類',        name:'50萬',                  status:'現貨', on:true},
+  {id:'p76', cat:'爆炸音類',        name:'100萬',                 status:'現貨', on:true},
+  {id:'p77', cat:'爆炸音類',        name:'200萬',                 status:'現貨', on:true},
+  {id:'p78', cat:'爆炸音類',        name:'300萬',                 status:'現貨', on:true},
+  {id:'p79', cat:'爆炸音類',        name:'500萬',                 status:'現貨', on:true},
+  {id:'p80', cat:'爆炸音類',        name:'10公分',                status:'現貨', on:true},
+  {id:'p81', cat:'爆炸音類',        name:'30公分',                status:'現貨', on:true},
+  {id:'p82', cat:'爆炸音類',        name:'100公分',               status:'缺',   on:true},
+  {id:'p83', cat:'爆炸音類',        name:'150公分',               status:'缺',   on:true},
+  {id:'p84', cat:'爆炸音類',        name:'200公分',               status:'現貨', on:true},
+  {id:'p85', cat:'爆炸音類',        name:'300公分',               status:'現貨', on:true},
+  {id:'p86', cat:'爆炸音類',        name:'500公分',               status:'現貨', on:true},
+  {id:'p87', cat:'爆炸音類',        name:'1000公分',              status:'現貨', on:true},
+  {id:'p88', cat:'爆炸音類',        name:'龍響炮贊',              status:'缺',   on:true},
+  {id:'p89', cat:'爆炸音類',        name:'錢多多尺炮',             status:'缺',   on:true},
+  {id:'p90', cat:'爆炸音類',        name:'24響大排炮',             status:'缺',   on:true},
+  {id:'p91', cat:'爆炸音類',        name:'專用排炮',              status:'缺',   on:true},
+  {id:'p92', cat:'爆炸音類',        name:'神農趕鳥炮',             status:'現貨', on:true},
+  {id:'p93', cat:'爆炸音類',        name:'80公分彩帶',             status:'現貨', on:true},
+];
+
+let products = [];
+let cart = {}; // { id: qty }
+
+async function save() {
+  localStorage.setItem(KEY_PRODUCTS, JSON.stringify(products));
+  if (USE_SHEETS) {
+    try {
+      await fetch(SHEETS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ key: WRITE_KEY, products })
+      });
+    } catch(e) { console.warn('Sheets save error', e); }
+  }
+}
+let remotePin = null; // 從 Google Sheets 讀到的密碼
+function getPin() { return remotePin || localStorage.getItem(KEY_PIN) || DEFAULT_PIN; }
+function findProduct(id) { return products.find(p => p.id === id); }
+
+/* 啟動順序：Google Sheets → localStorage → 預設 */
+(async function init() {
+  if (USE_SHEETS) {
+    try {
+      const res = await fetch(SHEETS_URL);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.products && data.products.length > 0) {
+          products = data.products;
+          localStorage.setItem(KEY_PRODUCTS, JSON.stringify(products));
+        }
+        if (data.adminPin) remotePin = String(data.adminPin);
+        return;
+      }
+    } catch(e) { console.warn('Sheets load error', e); }
+  }
+  products = JSON.parse(localStorage.getItem(KEY_PRODUCTS)) || DEFAULT_PRODUCTS;
+})();
+
+/* ====================================================
+   VIEWS
+==================================================== */
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+/* ====================================================
+   HOME
+==================================================== */
+function startOrder() {
+  cart = {};
+  document.getElementById('customer-name').value = '';
+  renderProductList();
+  updateCartBar();
+  showView('customer');
+}
+
+function goAdminLogin() {
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+  showView('admin-login');
+}
+
+/* ====================================================
+   CUSTOMER — PRODUCT LIST
+==================================================== */
+const CAT_EMOJI = {
+  '蜂炮類':'🐝', '日間煙火類':'☀️', '大型煙火(扇形)':'🎆',
+  '大型煙火(直上)':'🚀', '中型煙火類':'🎇', '小型煙火類':'✨',
+  '玩具升空類':'🎈', '玩具旋轉類':'🌀', '小型玩具類':'🎁',
+  '玩具飛行類':'🦅', '玩具火花類':'⭐', '玩具手持類':'🪄',
+  '爆炸音類':'💥',
+};
+
+function renderProductList() {
+  const cats = {};
+  products.filter(p => p.on).forEach(p => {
+    (cats[p.cat] = cats[p.cat] || []).push(p);
+  });
+
+  let html = '';
+  for (const [cat, items] of Object.entries(cats)) {
+    const emoji = CAT_EMOJI[cat] || '🎆';
+    html += `<div class="category-section">
+      <div class="category-header"><span>${emoji}</span>${cat}</div>`;
+    items.forEach(p => {
+      const avail = p.status === '現貨' || p.status === '少量';
+      const bdg = p.status === '少量' ? 'badge-limited' : avail ? 'badge-available' : 'badge-unavailable';
+      html += `
+        <div class="product-item">
+          <input type="checkbox" class="product-checkbox" id="cb-${p.id}"
+            ${avail ? '' : 'disabled'} onchange="toggleCart('${p.id}')">
+          <label for="cb-${p.id}" class="product-name" style="${avail ? '' : 'color:#ccc'}">${p.name}</label>
+          <span class="product-badge ${bdg}">${p.status}</span>
+        </div>
+        <div class="qty-row" id="qty-${p.id}">
+          <button class="qty-btn" onclick="changeQty('${p.id}',-1)">−</button>
+          <input class="qty-input" type="number" id="qi-${p.id}" value="1" min="1" max="9999"
+            oninput="setQty('${p.id}',this.value)">
+          <button class="qty-btn" onclick="changeQty('${p.id}',1)">＋</button>
+          <span class="qty-label">箱</span>
+        </div>`;
+    });
+    html += '</div>';
+  }
+  if (!html) html = '<div style="text-align:center;padding:40px;color:#bbb">目前沒有可訂購的品項</div>';
+  document.getElementById('product-list').innerHTML = html;
+}
+
+function toggleCart(id) {
+  const cb = document.getElementById('cb-' + id);
+  const qr = document.getElementById('qty-' + id);
+  if (cb.checked) {
+    cart[id] = 1;
+    document.getElementById('qi-' + id).value = 1;
+    qr.classList.add('visible');
+  } else {
+    delete cart[id];
+    qr.classList.remove('visible');
+  }
+  updateCartBar();
+}
+
+function changeQty(id, d) {
+  const el = document.getElementById('qi-' + id);
+  const v = Math.max(1, (parseInt(el.value) || 1) + d);
+  el.value = v;
+  cart[id] = v;
+}
+
+function setQty(id, v) {
+  cart[id] = Math.max(1, parseInt(v) || 1);
+}
+
+function updateCartBar() {
+  const count = Object.keys(cart).length;
+  document.getElementById('cart-item-count').textContent = count;
+  document.getElementById('cart-bar').classList.toggle('hidden', count === 0);
+}
+
+/* ====================================================
+   ORDER PREVIEW
+==================================================== */
+function previewOrder() {
+  if (!Object.keys(cart).length) {
+    alert('請至少選擇一項品項！');
+    return;
+  }
+  document.getElementById('customer-name').value = '';
+  document.getElementById('name-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('customer-name').focus(), 100);
+}
+
+function confirmName() {
+  const name = document.getElementById('customer-name').value.trim();
+  if (!name) {
+    document.getElementById('customer-name').focus();
+    return;
+  }
+  closeAllModals();
+  renderOrderForm(name);
+  showView('order-preview');
+}
+
+function renderOrderForm(name) {
+  const d = new Date();
+  const date = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+  const items = Object.entries(cart).map(([id, qty]) => ({
+    name: findProduct(id)?.name || '?', qty
+  }));
+  const ROWS = Math.max(15, items.length + 3);
+
+  let rows = items.map((it, i) => `
+    <tr class="filled">
+      <td>${i+1}</td>
+      <td class="name-cell">${it.name}</td>
+      <td>${it.qty}</td>
+      <td></td>
+      <td></td>
+    </tr>`).join('');
+
+  for (let i = items.length; i < ROWS; i++) {
+    rows += `<tr><td>${i+1}</td><td></td><td></td><td></td><td></td></tr>`;
+  }
+
+  document.getElementById('order-form-content').innerHTML = `
+    <div class="order-title">訂 購 單</div>
+    <div class="order-meta">
+      <div class="order-meta-item">
+        <span class="order-meta-label">姓名</span>
+        <span class="order-meta-value">${name}</span>
+      </div>
+      <div class="order-meta-item">
+        <span class="order-meta-label">日期</span>
+        <span class="order-meta-value">${date}</span>
+      </div>
+    </div>
+    <table class="order-table">
+      <thead>
+        <tr>
+          <th style="width:36px">#</th>
+          <th>品&nbsp;&nbsp;&nbsp;名</th>
+          <th style="width:54px">數量</th>
+          <th style="width:50px">確認</th>
+          <th style="width:50px">倉庫</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function printOrder() { window.print(); }
+
+/* ====================================================
+   ADMIN LOGIN
+==================================================== */
+let pinBuffer = '';
+
+function pinPress(d) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += d;
+  updatePinDots();
+  if (pinBuffer.length === 4) setTimeout(checkPin, 150);
+}
+function pinDelete() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+}
+function pinClear() {
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+}
+function updatePinDots() {
+  for (let i = 0; i < 4; i++)
+    document.getElementById('dot-' + i).classList.toggle('filled', i < pinBuffer.length);
+}
+function checkPin() {
+  if (pinBuffer === getPin()) {
+    pinBuffer = '';
+    updatePinDots();
+    document.getElementById('pin-error').textContent = '';
+    renderAdmin();
+    showView('admin-dashboard');
+  } else {
+    document.getElementById('pin-error').textContent = '密碼錯誤，請再試一次';
+    setTimeout(() => { pinBuffer = ''; updatePinDots(); }, 700);
+  }
+}
+
+/* ====================================================
+   ADMIN DASHBOARD
+==================================================== */
+function renderAdmin() {
+  const cats = {};
+  products.forEach(p => (cats[p.cat] = cats[p.cat] || []).push(p));
+
+  let html = '<div style="padding:12px 20px;background:#fffbf0;border-bottom:1px solid #f0e8cc;font-size:12px;color:#9c7a00">☑ 勾選 = 客戶可見 &nbsp;|&nbsp; 點狀態標籤可切換 &nbsp;|&nbsp; ✕ 刪除品項</div>';
+  for (const [cat, items] of Object.entries(cats)) {
+    html += `<div class="category-section">
+      <div class="category-header">${CAT_EMOJI[cat] || '🎆'} ${cat}</div>`;
+    items.forEach(p => {
+      const sc = p.status === '現貨' ? 's-available' : p.status === '少量' ? 's-limited' : 's-unavailable';
+      html += `
+        <div class="admin-product-item">
+          <input type="checkbox" class="admin-toggle" ${p.on ? 'checked' : ''}
+            onchange="toggleEnabled('${p.id}',this.checked)">
+          <span class="admin-product-name">${p.name}</span>
+          <button class="status-btn ${sc}" onclick="cycleStatus('${p.id}')">${p.status}</button>
+          <button class="delete-btn" onclick="delProduct('${p.id}')">✕</button>
+        </div>`;
+    });
+    html += '</div>';
+  }
+  document.getElementById('admin-product-list').innerHTML = html;
+}
+
+function toggleEnabled(id, v) {
+  const p = findProduct(id);
+  if (p) { p.on = v; save(); }
+}
+
+function cycleStatus(id) {
+  const p = findProduct(id);
+  if (!p) return;
+  const c = ['現貨','少量','缺'];
+  p.status = c[(c.indexOf(p.status) + 1) % c.length];
+  save();
+  renderAdmin();
+}
+
+function delProduct(id) {
+  if (!confirm('確定要刪除這個品項嗎？')) return;
+  products = products.filter(p => p.id !== id);
+  save();
+  renderAdmin();
+}
+
+/* ====================================================
+   EXPORT / SYNC FUNCTIONS
+==================================================== */
+async function syncToSheets() {
+  if (!USE_SHEETS) {
+    alert('尚未設定 Google Sheets URL，請先填入 SHEETS_URL');
+    return;
+  }
+  const btn = event.target;
+  btn.textContent = '⏳ 同步中...';
+  btn.disabled = true;
+  try {
+    const res = await fetch(SHEETS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ key: WRITE_KEY, products })
+    });
+    const result = await res.json();
+    if (result.success) {
+      btn.textContent = '✅ 同步成功！';
+      setTimeout(() => { btn.textContent = '☁️ 同步到 Google Sheets'; btn.disabled = false; }, 2000);
+    } else {
+      throw new Error(result.error || '未知錯誤');
+    }
+  } catch(e) {
+    alert('同步失敗：' + e.message);
+    btn.textContent = '☁️ 同步到 Google Sheets';
+    btn.disabled = false;
+  }
+}
+
+function exportJson() {
+  const json = JSON.stringify(products, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'products.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportAdminPdf() {
+  const d = new Date();
+  const date = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+  const cats = {};
+  products.forEach(p => (cats[p.cat] = cats[p.cat] || []).push(p));
+
+  let rows = '';
+  for (const [cat, items] of Object.entries(cats)) {
+    rows += `<tr><td colspan="4" class="admin-print-cat">${CAT_EMOJI[cat] || ''} ${cat}</td></tr>`;
+    items.forEach((p, i) => {
+      const statusColor = p.status === '現貨' ? '#2e7d32' : p.status === '少量' ? '#e65100' : '#c62828';
+      const onText = p.on ? '✓ 顯示' : '✗ 隱藏';
+      rows += `<tr>
+        <td style="width:30px;text-align:center;color:#999">${i+1}</td>
+        <td>${p.name}</td>
+        <td style="text-align:center;color:${statusColor};font-weight:700">${p.status}</td>
+        <td style="text-align:center;color:${p.on ? '#2e7d32' : '#bbb'}">${onText}</td>
+      </tr>`;
+    });
+  }
+
+  document.getElementById('admin-print-area').innerHTML = `
+    <div class="admin-print-title">品 項 總 覽</div>
+    <div class="admin-print-date">匯出日期：${date}　共 ${products.length} 項</div>
+    <table class="admin-print-table">
+      <thead><tr>
+        <th>#</th><th>品名</th><th style="width:56px">狀態</th><th style="width:64px">是否顯示</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  document.body.classList.add('print-admin');
+  window.print();
+  document.body.classList.remove('print-admin');
+}
+
+/* ====================================================
+   ADD PRODUCT MODAL
+==================================================== */
+function openAddModal() {
+  const cats = [...new Set(products.map(p => p.cat))];
+  document.getElementById('cat-datalist').innerHTML = cats.map(c => `<option value="${c}">`).join('');
+  document.getElementById('new-category').value = '';
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-status').value = '現貨';
+  document.getElementById('add-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('new-category').focus(), 100);
+}
+
+function confirmAddProduct() {
+  const cat = document.getElementById('new-category').value.trim();
+  const name = document.getElementById('new-name').value.trim();
+  const status = document.getElementById('new-status').value;
+  if (!cat || !name) { alert('請填寫分類和品名'); return; }
+  products.push({ id: 'p' + Date.now(), cat, name, status, on: true });
+  save();
+  closeAllModals();
+  renderAdmin();
+}
+
+/* ====================================================
+   CHANGE PIN MODAL
+==================================================== */
+function showChangePin() {
+  document.getElementById('new-pin-val').value = '';
+  document.getElementById('pin-modal').classList.remove('hidden');
+}
+
+async function confirmChangePin() {
+  const v = document.getElementById('new-pin-val').value.trim();
+  if (!/^\d{4}$/.test(v)) { alert('密碼必須是4位數字'); return; }
+  localStorage.setItem(KEY_PIN, v);
+  remotePin = v;
+  closeAllModals();
+  if (USE_SHEETS) {
+    try {
+      await fetch(SHEETS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ key: WRITE_KEY, action: 'updatePin', newPin: v })
+      });
+    } catch(e) { console.warn('Pin sync error', e); }
+  }
+  alert('密碼已更新！');
+}
+
+/* ====================================================
+   MODALS
+==================================================== */
+function closeAllModals() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
+}
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeAllModals(); });
+});
+</script>
+</body>
+</html>
