@@ -706,7 +706,7 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
       <button class="admin-btn-secondary" onclick="exportAdminPdf()">📄 品項總覽圖</button>
     </div>
     <div class="admin-btn-row">
-      <button class="admin-btn-secondary" style="background:#e8f5e9;border-color:#2e7d32;color:#2e7d32" onclick="syncToSheets()">☁️ 同步到 Google Sheets</button>
+      <button class="admin-btn-secondary" style="background:#e8f5e9;border-color:#2e7d32;color:#2e7d32;font-weight:700" onclick="syncToSheets()">💾 儲存修改</button>
     </div>
   </div>
   <div id="admin-product-list"></div>
@@ -721,8 +721,8 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
     <h3 class="modal-title">新增品項</h3>
     <div class="form-group">
       <label class="form-label">分類</label>
-      <input type="text" class="form-input" id="new-category" placeholder="例：蜂炮類" list="cat-datalist">
-      <datalist id="cat-datalist"></datalist>
+      <select class="form-select" id="new-cat-select" onchange="onCatSelectChange('new')"></select>
+      <input type="text" class="form-input" id="new-cat-custom" placeholder="輸入新分類名稱" style="display:none;margin-top:8px">
     </div>
     <div class="form-group">
       <label class="form-label">品名</label>
@@ -750,7 +750,8 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
     <input type="hidden" id="edit-id">
     <div class="form-group">
       <label class="form-label">分類</label>
-      <input type="text" class="form-input" id="edit-category" list="cat-datalist">
+      <select class="form-select" id="edit-cat-select" onchange="onCatSelectChange('edit')"></select>
+      <input type="text" class="form-input" id="edit-cat-custom" placeholder="輸入新分類名稱" style="display:none;margin-top:8px">
     </div>
     <div class="form-group">
       <label class="form-label">品名</label>
@@ -1279,14 +1280,14 @@ async function syncToSheets() {
     });
     const result = await res.json();
     if (result.success) {
-      btn.textContent = '✅ 同步成功！';
-      setTimeout(() => { btn.textContent = '☁️ 同步到 Google Sheets'; btn.disabled = false; }, 2000);
+      btn.textContent = '✅ 已儲存！';
+      setTimeout(() => { btn.textContent = '💾 儲存修改'; btn.disabled = false; }, 2000);
     } else {
       throw new Error(result.error || '未知錯誤');
     }
   } catch(e) {
-    alert('同步失敗：' + e.message);
-    btn.textContent = '☁️ 同步到 Google Sheets';
+    alert('儲存失敗：' + e.message);
+    btn.textContent = '💾 儲存修改';
     btn.disabled = false;
   }
 }
@@ -1359,10 +1360,10 @@ async function exportAdminPdf() {
 function openEditModal(id) {
   const p = findProduct(id);
   if (!p) return;
-  const cats = [...new Set(products.map(x => x.cat))];
-  document.getElementById('cat-datalist').innerHTML = cats.map(c => `<option value="${c}">`).join('');
+  buildCatSelect('edit-cat-select', p.cat);
+  document.getElementById('edit-cat-custom').style.display = 'none';
+  document.getElementById('edit-cat-custom').value = '';
   document.getElementById('edit-id').value = id;
-  document.getElementById('edit-category').value = p.cat;
   document.getElementById('edit-name').value = p.name;
   document.getElementById('edit-status').value = p.status;
   document.getElementById('edit-modal').classList.remove('hidden');
@@ -1371,7 +1372,7 @@ function openEditModal(id) {
 
 function confirmEditProduct() {
   const id = document.getElementById('edit-id').value;
-  const cat = document.getElementById('edit-category').value.trim();
+  const cat = getCatValue('edit');
   const name = document.getElementById('edit-name').value.trim();
   const status = document.getElementById('edit-status').value;
   if (!cat || !name) { alert('請填寫分類和品名'); return; }
@@ -1384,18 +1385,41 @@ function confirmEditProduct() {
 /* ====================================================
    ADD PRODUCT MODAL
 ==================================================== */
-function openAddModal() {
+// ── 分類下拉輔助函式 ──────────────────────────────────────
+function buildCatSelect(selectId, currentCat) {
   const cats = [...new Set(products.map(p => p.cat))];
-  document.getElementById('cat-datalist').innerHTML = cats.map(c => `<option value="${c}">`).join('');
-  document.getElementById('new-category').value = '';
+  const sel = document.getElementById(selectId);
+  sel.innerHTML = cats.map(c =>
+    `<option value="${c}"${c === currentCat ? ' selected' : ''}>${c}</option>`
+  ).join('') + `<option value="__new__">＋ 新增分類...</option>`;
+  if (currentCat && !cats.includes(currentCat)) sel.value = '__new__';
+}
+
+function onCatSelectChange(prefix) {
+  const isNew = document.getElementById(prefix + '-cat-select').value === '__new__';
+  const custom = document.getElementById(prefix + '-cat-custom');
+  custom.style.display = isNew ? 'block' : 'none';
+  if (isNew) setTimeout(() => custom.focus(), 50);
+}
+
+function getCatValue(prefix) {
+  const sel = document.getElementById(prefix + '-cat-select');
+  if (sel.value === '__new__') return document.getElementById(prefix + '-cat-custom').value.trim();
+  return sel.value;
+}
+
+function openAddModal() {
+  buildCatSelect('new-cat-select', '');
+  document.getElementById('new-cat-custom').style.display = 'none';
+  document.getElementById('new-cat-custom').value = '';
   document.getElementById('new-name').value = '';
   document.getElementById('new-status').value = '現貨';
   document.getElementById('add-modal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('new-category').focus(), 100);
+  setTimeout(() => document.getElementById('new-name').focus(), 100);
 }
 
 function confirmAddProduct() {
-  const cat = document.getElementById('new-category').value.trim();
+  const cat = getCatValue('new');
   const name = document.getElementById('new-name').value.trim();
   const status = document.getElementById('new-status').value;
   if (!cat || !name) { alert('請填寫分類和品名'); return; }
