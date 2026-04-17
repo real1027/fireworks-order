@@ -1567,13 +1567,9 @@ function showMedia(url, type, title) {
   document.getElementById('media-overlay-title').textContent = title || '';
   const img = document.getElementById('media-overlay-img');
   const iframe = document.getElementById('media-overlay-iframe');
-  if (type === 'img') {
-    img.src = url; img.style.display = 'block';
-    iframe.src = ''; iframe.style.display = 'none';
-  } else {
-    iframe.src = url; iframe.style.display = 'block';
-    img.src = ''; img.style.display = 'none';
-  }
+  // 圖片和影片都用 iframe（Google Drive /preview 格式）
+  img.style.display = 'none'; img.src = '';
+  iframe.src = url; iframe.style.display = 'block';
   overlay.style.display = 'flex';
 }
 

@@ -56,9 +56,8 @@ function doPost(e) {
       const file = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       const fileId = file.getId();
-      const url = mimeType.startsWith('video/')
-        ? `https://drive.google.com/file/d/${fileId}/preview`
-        : `https://drive.google.com/uc?export=view&id=${fileId}`;
+      // 圖片和影片都用 /preview，透過 iframe 嵌入顯示
+      const url = `https://drive.google.com/file/d/${fileId}/preview`;
       return jsonOut({ success: true, url });
     }
 
