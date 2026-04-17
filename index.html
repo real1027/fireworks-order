@@ -165,9 +165,9 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
   cursor: pointer;
   flex-shrink: 0;
 }
-.product-info { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.product-info { flex: 1; min-width: 0; }
 .product-name { font-size: 14px; line-height: 1.4; cursor: pointer; display: block; }
-.effect-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.effect-btns { display: flex; gap: 6px; flex-shrink: 0; }
 .effect-btn {
   font-size: 11px;
   padding: 3px 9px;
@@ -1140,8 +1140,8 @@ function renderProductList() {
             ${avail ? '' : 'disabled'} onchange="toggleCart('${p.id}')">
           <div class="product-info">
             <label for="cb-${p.id}" class="product-name" style="${avail ? '' : 'color:#ccc'}">${p.name}</label>
-            ${effectBtns ? `<div class="effect-btns">${effectBtns}</div>` : ''}
           </div>
+          ${effectBtns ? `<div class="effect-btns">${effectBtns}</div>` : ''}
           <span class="product-badge ${bdg}">${p.status}</span>
         </div>
         <div class="qty-row" id="qty-${p.id}">
