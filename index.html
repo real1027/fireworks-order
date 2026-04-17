@@ -1561,6 +1561,14 @@ function setUploadState(type, url) {
 }
 
 function showMedia(url, type, title) {
+  // 影片直接開新分頁，用 Google Drive 原生播放器（UI 乾淨）
+  if (type === 'video') {
+    const viewUrl = url.replace('/preview', '/view');
+    window.open(viewUrl, '_blank');
+    return;
+  }
+
+  // 效果單圖片：用 overlay 顯示
   let overlay = document.getElementById('media-overlay');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -1571,16 +1579,13 @@ function showMedia(url, type, title) {
         <button id="media-overlay-close" onclick="closeMediaOverlay()">✕ 關閉</button>
       </div>
       <div id="media-overlay-body">
-        <img id="media-overlay-img" src="" alt="" style="display:none">
-        <iframe id="media-overlay-iframe" src="" allowfullscreen style="display:none"></iframe>
+        <iframe id="media-overlay-iframe" src="" allowfullscreen></iframe>
       </div>`;
     document.body.appendChild(overlay);
   }
   document.getElementById('media-overlay-title').textContent = title || '';
-  const img = document.getElementById('media-overlay-img');
   const iframe = document.getElementById('media-overlay-iframe');
-  img.style.display = 'none'; img.src = '';
-  iframe.src = url; iframe.style.display = 'block';
+  iframe.src = url;
   overlay.style.display = 'flex';
 }
 
