@@ -359,33 +359,43 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
   inset: 0;
   z-index: 9999;
   background: rgba(0,0,0,0.92);
-  align-items: flex-start;
-  justify-content: center;
-  overflow-y: auto;
-  padding: 16px;
-  box-sizing: border-box;
-}
-#media-overlay-box {
-  display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+}
+#media-overlay-topbar {
+  position: relative;
+  z-index: 10001;
   width: 100%;
   max-width: 680px;
-  padding-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 #media-overlay-title {
-  color: #fff; font-size: 15px; font-weight: 700; margin: 8px 0 0; align-self: flex-start;
+  color: #fff; font-size: 15px; font-weight: 700;
+}
+#media-overlay-close {
+  background: #e53935; color: #fff;
+  border: none; border-radius: 8px;
+  padding: 8px 18px; font-size: 15px; font-weight: 700;
+  cursor: pointer; flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+#media-overlay-body {
+  flex: 1;
+  width: 100%;
+  max-width: 680px;
+  overflow-y: auto;
+  padding: 0 14px 20px;
+  box-sizing: border-box;
 }
 #media-overlay-img { width: 100%; border-radius: 8px; display: block; }
 #media-overlay-iframe {
   width: 100%; aspect-ratio: 16/9; border: none; border-radius: 8px;
   background: #000;
-}
-#media-overlay-close {
-  background: rgba(255,255,255,0.15); color: #fff;
-  border: 1px solid rgba(255,255,255,0.3); border-radius: 8px;
-  padding: 10px 28px; font-size: 15px; cursor: pointer; margin-top: 4px;
 }
 
 /* 圖片預覽 overlay */
@@ -1555,19 +1565,19 @@ function showMedia(url, type, title) {
     overlay = document.createElement('div');
     overlay.id = 'media-overlay';
     overlay.innerHTML = `
-      <div id="media-overlay-box">
-        <p id="media-overlay-title"></p>
+      <div id="media-overlay-topbar">
+        <span id="media-overlay-title"></span>
+        <button id="media-overlay-close" onclick="closeMediaOverlay()">✕ 關閉</button>
+      </div>
+      <div id="media-overlay-body">
         <img id="media-overlay-img" src="" alt="" style="display:none">
         <iframe id="media-overlay-iframe" src="" allowfullscreen style="display:none"></iframe>
-        <button id="media-overlay-close" onclick="closeMediaOverlay()">✕ 關閉</button>
       </div>`;
-    overlay.addEventListener('click', e => { if (e.target === overlay) closeMediaOverlay(); });
     document.body.appendChild(overlay);
   }
   document.getElementById('media-overlay-title').textContent = title || '';
   const img = document.getElementById('media-overlay-img');
   const iframe = document.getElementById('media-overlay-iframe');
-  // 圖片和影片都用 iframe（Google Drive /preview 格式）
   img.style.display = 'none'; img.src = '';
   iframe.src = url; iframe.style.display = 'block';
   overlay.style.display = 'flex';
