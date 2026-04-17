@@ -45,6 +45,23 @@ function doPost(e) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     ensureSettingsSheet(ss);
 
+    // ── 上傳檔案到 Google Drive ──
+    if (payload.action === 'uploadFile') {
+      const { fileName, mimeType, data } = payload;
+      const folderName = '煙火訂購系統_附件';
+      let folder;
+      const it = DriveApp.getFoldersByName(folderName);
+      folder = it.hasNext() ? it.next() : DriveApp.createFolder(folderName);
+      const blob = Utilities.newBlob(Utilities.base64Decode(data), mimeType, fileName);
+      const file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      const fileId = file.getId();
+      const url = mimeType.startsWith('video/')
+        ? `https://drive.google.com/file/d/${fileId}/preview`
+        : `https://drive.google.com/uc?export=view&id=${fileId}`;
+      return jsonOut({ success: true, url });
+    }
+
     // ── 更新管理密碼 ──
     if (payload.action === 'updatePin') {
       const newPin = String(payload.newPin);
@@ -71,15 +88,15 @@ function doPost(e) {
         ss.moveActiveSheet(idx + 1);
       }
       sheet.clearContents();
-      sheet.appendRow(['id', 'name', 'status', 'on']);
-      const rows = byCat[cat].map(p => [p.id, p.name, p.status, p.on]);
-      if (rows.length > 0) sheet.getRange(2, 1, rows.length, 4).setValues(rows);
+      sheet.appendRow(['id', 'name', 'status', 'on', 'effectImg', 'effectVideo']);
+      const rows = byCat[cat].map(p => [p.id, p.name, p.status, p.on, p.effectImg||'', p.effectVideo||'']);
+      if (rows.length > 0) sheet.getRange(2, 1, rows.length, 6).setValues(rows);
       const hr = sheet.getRange(1, 1, 1, 4);
       hr.setFontWeight('bold');
       hr.setBackground('#302b63');
       hr.setFontColor('#ffffff');
       sheet.setFrozenRows(1);
-      sheet.autoResizeColumns(1, 4);
+      sheet.autoResizeColumns(1, 6);
       if (rows.length > 0)
         sheet.getRange(2, 3, rows.length, 1).setHorizontalAlignment('center');
     });
