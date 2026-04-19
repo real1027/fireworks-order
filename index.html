@@ -165,9 +165,10 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
   cursor: pointer;
   flex-shrink: 0;
 }
-.product-info { flex: 1; min-width: 0; }
+.product-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
 .product-name { font-size: 14px; line-height: 1.4; cursor: pointer; display: block; }
-.effect-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.product-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.effect-btns { display: flex; gap: 6px; flex-wrap: wrap; }
 .effect-btn {
   font-size: 11px;
   padding: 3px 9px;
@@ -547,7 +548,8 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
   accent-color: #302b63;
   flex-shrink: 0;
 }
-.admin-product-name { flex: 1; font-size: 13px; line-height: 1.4; }
+.admin-product-name { flex: 1; font-size: 13px; line-height: 1.4; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.admin-media-tag { font-size: 10px; opacity: 0.6; flex-shrink: 0; }
 .status-btn {
   border: none;
   border-radius: 20px;
@@ -1155,9 +1157,11 @@ function renderProductList() {
             ${avail ? '' : 'disabled'} onchange="toggleCart('${p.id}')">
           <div class="product-info">
             <label for="cb-${p.id}" class="product-name" style="${avail ? '' : 'color:#ccc'}">${p.name}</label>
+            <div class="product-meta">
+              ${effectBtns ? `<div class="effect-btns">${effectBtns}</div>` : ''}
+              <span class="product-badge ${bdg}">${p.status}</span>
+            </div>
           </div>
-          ${effectBtns ? `<div class="effect-btns">${effectBtns}</div>` : ''}
-          <span class="product-badge ${bdg}">${p.status}</span>
         </div>
         <div class="qty-row" id="qty-${p.id}">
           <button class="qty-btn" onclick="changeQty('${p.id}',-1)">−</button>
@@ -1370,7 +1374,12 @@ function renderAdmin() {
         <div class="admin-product-item">
           <input type="checkbox" class="admin-toggle" ${p.on ? 'checked' : ''}
             onchange="toggleEnabled('${p.id}',this.checked)">
-          <span class="admin-product-name">${p.name}</span>
+          <span class="admin-product-name">
+            ${p.name}
+            ${p.productImg  ? '<span class="admin-media-tag" title="有產品圖">🖼️</span>' : ''}
+            ${p.effectImg   ? '<span class="admin-media-tag" title="有效果單">📋</span>' : ''}
+            ${p.effectVideo ? '<span class="admin-media-tag" title="有影片">🎬</span>' : ''}
+          </span>
           <button class="status-btn ${sc}" onclick="cycleStatus('${p.id}')">${p.status}</button>
           <button class="edit-btn" onclick="openEditModal('${p.id}')" title="編輯">✏️</button>
           <button class="delete-btn" onclick="delProduct('${p.id}')" title="刪除">✕</button>
