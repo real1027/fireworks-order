@@ -180,6 +180,7 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
 }
 .effect-btn-img  { background: #e8f0fe; color: #1a56cc; }
 .effect-btn-vid  { background: #fce4ec; color: #b71c6d; }
+.effect-btn-prod { background: #fff8e1; color: #e65100; }
 .product-badge {
   font-size: 11px;
   padding: 3px 9px;
@@ -866,6 +867,16 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
       </select>
     </div>
     <div class="form-group">
+      <label class="form-label">產品圖（盒裝外觀）</label>
+      <div class="upload-row">
+        <span class="upload-current" id="edit-productImg-label">未上傳</span>
+        <button type="button" class="upload-btn" id="edit-productImg-btn" onclick="triggerUpload('productImg')">📎 選擇圖片</button>
+        <button type="button" class="upload-clear" id="edit-productImg-clear" style="display:none" onclick="clearUpload('productImg')">✕</button>
+      </div>
+      <input type="file" id="file-productImg" accept="image/*" style="display:none" onchange="handleUpload(event,'productImg')">
+      <input type="hidden" id="edit-productImg-url">
+    </div>
+    <div class="form-group">
       <label class="form-label">效果單（圖片）</label>
       <div class="upload-row">
         <span class="upload-current" id="edit-effectImg-label">未上傳</span>
@@ -1132,6 +1143,7 @@ function renderProductList() {
       const avail = p.status === '現貨' || p.status === '少量';
       const bdg = p.status === '少量' ? 'badge-limited' : avail ? 'badge-available' : 'badge-unavailable';
       const effectBtns = [
+        p.productImg  ? `<button class="effect-btn effect-btn-prod" onclick="showMedia('${p.productImg}','img','${p.name} 產品圖')">🖼️ 產品圖</button>` : '',
         p.effectImg   ? `<button class="effect-btn effect-btn-img" onclick="showMedia('${p.effectImg}','img','${p.name} 效果單')">📋 效果單</button>` : '',
         p.effectVideo ? `<button class="effect-btn effect-btn-vid" onclick="showMedia('${p.effectVideo}','video','${p.name} 影片')">🎬 影片</button>` : ''
       ].filter(Boolean).join('');
@@ -1607,6 +1619,7 @@ function openEditModal(id) {
   document.getElementById('edit-id').value = id;
   document.getElementById('edit-name').value = p.name;
   document.getElementById('edit-status').value = p.status;
+  setUploadState('productImg', p.productImg || '');
   setUploadState('effectImg', p.effectImg || '');
   setUploadState('effectVideo', p.effectVideo || '');
   document.getElementById('edit-modal').classList.remove('hidden');
@@ -1622,6 +1635,7 @@ function confirmEditProduct() {
   const p = findProduct(id);
   if (p) {
     p.cat = cat; p.name = name; p.status = status;
+    p.productImg  = document.getElementById('edit-productImg-url').value || undefined;
     p.effectImg   = document.getElementById('edit-effectImg-url').value || undefined;
     p.effectVideo = document.getElementById('edit-effectVideo-url').value || undefined;
     save();

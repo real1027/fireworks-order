@@ -87,15 +87,15 @@ function doPost(e) {
         ss.moveActiveSheet(idx + 1);
       }
       sheet.clearContents();
-      sheet.appendRow(['id', 'name', 'status', 'on', 'effectImg', 'effectVideo']);
-      const rows = byCat[cat].map(p => [p.id, p.name, p.status, p.on, p.effectImg||'', p.effectVideo||'']);
-      if (rows.length > 0) sheet.getRange(2, 1, rows.length, 6).setValues(rows);
+      sheet.appendRow(['id', 'name', 'status', 'on', 'productImg', 'effectImg', 'effectVideo']);
+      const rows = byCat[cat].map(p => [p.id, p.name, p.status, p.on, p.productImg||'', p.effectImg||'', p.effectVideo||'']);
+      if (rows.length > 0) sheet.getRange(2, 1, rows.length, 7).setValues(rows);
       const hr = sheet.getRange(1, 1, 1, 4);
       hr.setFontWeight('bold');
       hr.setBackground('#302b63');
       hr.setFontColor('#ffffff');
       sheet.setFrozenRows(1);
-      sheet.autoResizeColumns(1, 6);
+      sheet.autoResizeColumns(1, 7);
       if (rows.length > 0)
         sheet.getRange(2, 3, rows.length, 1).setHorizontalAlignment('center');
     });
