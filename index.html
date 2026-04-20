@@ -402,6 +402,35 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
   border: none; background: #000;
 }
 
+/* 下載面板 */
+#dl-sheet-overlay {
+  display: none; position: fixed; inset: 0; z-index: 9998;
+  background: rgba(0,0,0,0.45); align-items: flex-end; justify-content: center;
+}
+#dl-sheet {
+  background: #fff; border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 480px; padding: 20px 20px 36px;
+  box-sizing: border-box;
+}
+#dl-sheet-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #302b63; }
+.dl-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid #f0f0f0;
+}
+.dl-item:last-of-type { border-bottom: none; }
+.dl-item-name { font-size: 14px; color: #333; }
+.dl-item-btn {
+  background: #302b63; color: #fff; border: none; border-radius: 8px;
+  padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+  text-decoration: none; display: inline-block;
+  -webkit-tap-highlight-color: transparent;
+}
+#dl-sheet-cancel {
+  width: 100%; margin-top: 14px; padding: 12px;
+  background: #f0f0f0; color: #666; border: none; border-radius: 10px;
+  font-size: 15px; cursor: pointer;
+}
+
 /* 圖片預覽 overlay */
 #img-overlay {
   display: none;
@@ -1619,23 +1648,42 @@ function downloadAllMedia(pid) {
   const p = findProduct(pid);
   if (!p) return;
   const files = [
-    p.productImg  ? { url: p.productImg,  name: '產品圖' } : null,
-    p.effectImg   ? { url: p.effectImg,   name: '效果單' } : null,
-    p.effectVideo ? { url: p.effectVideo, name: '影片'   } : null,
+    p.productImg  ? { url: p.productImg,  label: '🖼️ 產品圖' } : null,
+    p.effectImg   ? { url: p.effectImg,   label: '📋 效果單' } : null,
+    p.effectVideo ? { url: p.effectVideo, label: '🎬 影片'   } : null,
   ].filter(Boolean);
   if (files.length === 0) return;
-  files.forEach((file, i) => {
-    setTimeout(() => {
-      const id = file.url.match(/\/d\/([a-zA-Z0-9_-]+)\//)?.[1];
-      if (!id) return;
-      const a = document.createElement('a');
-      a.href = `https://drive.google.com/uc?export=download&id=${id}`;
-      a.target = '_blank';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }, i * 800);
-  });
+
+  let overlay = document.getElementById('dl-sheet-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'dl-sheet-overlay';
+    overlay.innerHTML = `
+      <div id="dl-sheet">
+        <div id="dl-sheet-title"></div>
+        <div id="dl-sheet-list"></div>
+        <button id="dl-sheet-cancel" onclick="closeDlSheet()">取消</button>
+      </div>`;
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeDlSheet(); });
+    document.body.appendChild(overlay);
+  }
+
+  document.getElementById('dl-sheet-title').textContent = `⬇️ 下載 ${p.name}`;
+  const list = document.getElementById('dl-sheet-list');
+  list.innerHTML = files.map(f => {
+    const id = f.url.match(/\/d\/([a-zA-Z0-9_-]+)\//)?.[1];
+    const href = id ? `https://drive.google.com/uc?export=download&id=${id}` : f.url;
+    return `<div class="dl-item">
+      <span class="dl-item-name">${f.label}</span>
+      <a class="dl-item-btn" href="${href}" target="_blank">下載</a>
+    </div>`;
+  }).join('');
+  overlay.style.display = 'flex';
+}
+
+function closeDlSheet() {
+  const overlay = document.getElementById('dl-sheet-overlay');
+  if (overlay) overlay.style.display = 'none';
 }
 
 function closeMediaOverlay() {
