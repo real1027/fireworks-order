@@ -182,6 +182,7 @@ body { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; background
 .effect-btn-img  { background: #e8f0fe; color: #1a56cc; }
 .effect-btn-vid  { background: #fce4ec; color: #b71c6d; }
 .effect-btn-prod { background: #fff8e1; color: #e65100; }
+.effect-btn-dl   { background: #e8f5e9; color: #2e7d32; }
 .product-badge {
   font-size: 11px;
   padding: 3px 9px;
@@ -1146,10 +1147,12 @@ function renderProductList() {
     items.forEach(p => {
       const avail = p.status === '現貨' || p.status === '少量';
       const bdg = p.status === '少量' ? 'badge-limited' : avail ? 'badge-available' : 'badge-unavailable';
+      const hasMedia = p.productImg || p.effectImg || p.effectVideo;
       const effectBtns = [
         p.productImg  ? `<button class="effect-btn effect-btn-prod" onclick="showMedia('${p.productImg}','img','${p.name} 產品圖')">🖼️ 產品圖</button>` : '',
         p.effectImg   ? `<button class="effect-btn effect-btn-img" onclick="showMedia('${p.effectImg}','img','${p.name} 效果單')">📋 效果單</button>` : '',
-        p.effectVideo ? `<button class="effect-btn effect-btn-vid" onclick="showMedia('${p.effectVideo}','video','${p.name} 影片')">🎬 影片</button>` : ''
+        p.effectVideo ? `<button class="effect-btn effect-btn-vid" onclick="showMedia('${p.effectVideo}','video','${p.name} 影片')">🎬 影片</button>` : '',
+        hasMedia      ? `<button class="effect-btn effect-btn-dl" onclick="downloadAllMedia('${p.id}')">⬇️ 下載</button>` : ''
       ].filter(Boolean).join('');
       html += `
         <div class="product-item">
@@ -1610,6 +1613,29 @@ function showMedia(url, type, title) {
   const iframe = document.getElementById('media-overlay-iframe');
   iframe.src = url;
   overlay.style.display = 'flex';
+}
+
+function downloadAllMedia(pid) {
+  const p = findProduct(pid);
+  if (!p) return;
+  const files = [
+    p.productImg  ? { url: p.productImg,  name: '產品圖' } : null,
+    p.effectImg   ? { url: p.effectImg,   name: '效果單' } : null,
+    p.effectVideo ? { url: p.effectVideo, name: '影片'   } : null,
+  ].filter(Boolean);
+  if (files.length === 0) return;
+  files.forEach((file, i) => {
+    setTimeout(() => {
+      const id = file.url.match(/\/d\/([a-zA-Z0-9_-]+)\//)?.[1];
+      if (!id) return;
+      const a = document.createElement('a');
+      a.href = `https://drive.google.com/uc?export=download&id=${id}`;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }, i * 800);
+  });
 }
 
 function closeMediaOverlay() {
